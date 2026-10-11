@@ -7,33 +7,39 @@ algoritmo "Desafio1"
 // DATA:10/10/2026
 // PROFESSOR: ANDRE
 // ============================================================================
+const
+   PONTOS_VITORIA = 3
+   PONTOS_EMPATE = 1
+   PONTOS_DERROTA = 0
+   MAX_EQUIPES = 10
+   RES_VITORIA = 1     // codigos internos do resultado de uma partida
+   RES_EMPATE = 2
+   RES_DERROTA = 3
+
+tipo
+   // Registro que representa logicamente uma equipe
+   tEquipe = registro
+      codigo: inteiro
+      nome: caractere
+      capitao: caractere
+      vitorias: inteiro
+      empates: inteiro
+      derrotas: inteiro
+      pontosMarcados: inteiro
+      pontosSofridos: inteiro
+      saldo: inteiro
+      pontuacao: inteiro
+   fimregistro
+
 var
-   // ---------- "constantes" (valores fixos apos a inicializacao) ----------
-   PONTOS_VITORIA: inteiro
-   PONTOS_EMPATE: inteiro
-   PONTOS_DERROTA: inteiro
-   MAX_EQUIPES: inteiro        // deve ser igual ao limite dos vetores (10)
-   RES_VITORIA: inteiro        // codigos internos de resultado de uma partida
-   RES_EMPATE: inteiro
-   RES_DERROTA: inteiro
+   // vetor de registros (tamanho = MAX_EQUIPES)
+   equipes: vetor[1..10] de tEquipe
 
-   // ---------- vetor de registros (campos paralelos) ----------
-   eqCodigo: vetor[1..10] de inteiro
-   eqNome: vetor[1..10] de caractere
-   eqCapitao: vetor[1..10] de caractere
-   eqVitorias: vetor[1..10] de inteiro
-   eqEmpates: vetor[1..10] de inteiro
-   eqDerrotas: vetor[1..10] de inteiro
-   eqPontosMarc: vetor[1..10] de inteiro
-   eqPontosSofr: vetor[1..10] de inteiro
-   eqSaldo: vetor[1..10] de inteiro
-   eqPontuacao: vetor[1..10] de inteiro
-
-   // ---------- matrizes de confrontos ----------
+   // matrizes de confrontos
    matJogos: vetor[1..10,1..10] de inteiro
    matPontosPro: vetor[1..10,1..10] de inteiro
 
-   // ---------- estado geral do campeonato ----------
+   // estado geral do campeonato
    qtdEquipes: inteiro
    totalPartidas: inteiro
    opcao: inteiro
@@ -42,31 +48,24 @@ var
 // SUB-ROTINAS
 // ============================================================================
 
-// Define as constantes e zera todos os dados (chamado uma vez no inicio)
+// Zera os contadores e as matrizes (chamado uma vez no inicio)
 procedimento inicializarSistema
 var
    i, j: inteiro
 inicio
-   PONTOS_VITORIA <- 3
-   PONTOS_EMPATE <- 1
-   PONTOS_DERROTA <- 0
-   MAX_EQUIPES <- 10
-   RES_VITORIA <- 1
-   RES_EMPATE <- 2
-   RES_DERROTA <- 3
    qtdEquipes <- 0
    totalPartidas <- 0
    para i de 1 ate MAX_EQUIPES faca
-      eqCodigo[i] <- 0
-      eqNome[i] <- ""
-      eqCapitao[i] <- ""
-      eqVitorias[i] <- 0
-      eqEmpates[i] <- 0
-      eqDerrotas[i] <- 0
-      eqPontosMarc[i] <- 0
-      eqPontosSofr[i] <- 0
-      eqSaldo[i] <- 0
-      eqPontuacao[i] <- 0
+      equipes[i].codigo <- 0
+      equipes[i].nome <- ""
+      equipes[i].capitao <- ""
+      equipes[i].vitorias <- 0
+      equipes[i].empates <- 0
+      equipes[i].derrotas <- 0
+      equipes[i].pontosMarcados <- 0
+      equipes[i].pontosSofridos <- 0
+      equipes[i].saldo <- 0
+      equipes[i].pontuacao <- 0
       // repeticao aninhada: zera a linha i das matrizes
       para j de 1 ate MAX_EQUIPES faca
          matJogos[i,j] <- 0
@@ -76,8 +75,7 @@ inicio
 fimprocedimento
 
 // RECURSIVIDADE: contagem regressiva para o inicio do campeonato.
-// Caso-base: n <= 0 (encerra e exibe a mensagem final).
-// Chamada recursiva: contagemRegressiva(n - 1), sempre se aproximando do caso-base.
+// Caso-base: n <= 0. Chamada recursiva: contagemRegressiva(n - 1).
 procedimento contagemRegressiva(n: inteiro)
 inicio
    se n <= 0 entao
@@ -100,7 +98,7 @@ inicio
    fimpara
 fimprocedimento
 
-// Funcao: um texto e valido se tiver ao menos um caractere diferente de espaco
+// Um texto e valido se tiver ao menos um caractere diferente de espaco
 funcao nomeValido(texto: caractere): logico
 var
    i: inteiro
@@ -115,7 +113,7 @@ inicio
    retorne achouLetra
 fimfuncao
 
-// Funcao: le um inteiro >= 0, repetindo ate o usuario digitar um valor valido
+// Le um inteiro >= 0, repetindo ate o usuario digitar um valor valido
 funcao lerNaoNegativo(mensagem: caractere): inteiro
 var
    valor: inteiro
@@ -130,8 +128,7 @@ inicio
    retorne valor
 fimfuncao
 
-// Funcao de busca: recebe o codigo por parametro e retorna o indice da equipe
-// no vetor (ou 0 se nao encontrada)
+// Funcao de busca: devolve o indice da equipe no vetor (0 se nao encontrada)
 funcao localizarEquipe(codigo: inteiro): inteiro
 var
    i, posicao: inteiro
@@ -139,7 +136,7 @@ inicio
    posicao <- 0
    i <- 1
    enquanto (i <= qtdEquipes) e (posicao = 0) faca
-      se eqCodigo[i] = codigo entao
+      se equipes[i].codigo = codigo entao
          posicao <- i
       fimse
       i <- i + 1
@@ -159,8 +156,8 @@ inicio
    retorne vitorias * PONTOS_VITORIA + empates * PONTOS_EMPATE + derrotas * PONTOS_DERROTA
 fimfuncao
 
-// Procedimento com PASSAGEM POR REFERENCIA (var): o resultado calculado aqui
-// precisa voltar para quem chamou (res1 e res2 sao alterados).
+// PASSAGEM POR REFERENCIA (var): res1 e res2 sao alterados aqui e o novo valor
+// precisa voltar para quem chamou.
 procedimento determinarResultado(pontos1: inteiro; pontos2: inteiro; var res1: inteiro; var res2: inteiro)
 inicio
    se pontos1 > pontos2 entao
@@ -180,18 +177,19 @@ fimprocedimento
 // Atualiza as estatisticas de UMA equipe (idx) apos uma partida
 procedimento atualizarEquipe(idx: inteiro; marcados: inteiro; sofridos: inteiro; resultado: inteiro)
 inicio
-   eqPontosMarc[idx] <- eqPontosMarc[idx] + marcados
-   eqPontosSofr[idx] <- eqPontosSofr[idx] + sofridos
-   escolha resultado
-      caso 1
-         eqVitorias[idx] <- eqVitorias[idx] + 1
-      caso 2
-         eqEmpates[idx] <- eqEmpates[idx] + 1
-      outrocaso
-         eqDerrotas[idx] <- eqDerrotas[idx] + 1
-   fimescolha
-   eqSaldo[idx] <- calcularSaldo(eqPontosMarc[idx], eqPontosSofr[idx])
-   eqPontuacao[idx] <- calcularPontuacao(eqVitorias[idx], eqEmpates[idx], eqDerrotas[idx])
+   equipes[idx].pontosMarcados <- equipes[idx].pontosMarcados + marcados
+   equipes[idx].pontosSofridos <- equipes[idx].pontosSofridos + sofridos
+   se resultado = RES_VITORIA entao
+      equipes[idx].vitorias <- equipes[idx].vitorias + 1
+   senao
+      se resultado = RES_EMPATE entao
+         equipes[idx].empates <- equipes[idx].empates + 1
+      senao
+         equipes[idx].derrotas <- equipes[idx].derrotas + 1
+      fimse
+   fimse
+   equipes[idx].saldo <- calcularSaldo(equipes[idx].pontosMarcados, equipes[idx].pontosSofridos)
+   equipes[idx].pontuacao <- calcularPontuacao(equipes[idx].vitorias, equipes[idx].empates, equipes[idx].derrotas)
 fimprocedimento
 
 // Cadastro de equipe com todas as validacoes exigidas
@@ -223,18 +221,18 @@ inicio
                senao
                   qtdEquipes <- qtdEquipes + 1
                   posicao <- qtdEquipes
-                  eqCodigo[posicao] <- codigo
-                  eqNome[posicao] <- nome
-                  eqCapitao[posicao] <- capitao
+                  equipes[posicao].codigo <- codigo
+                  equipes[posicao].nome <- nome
+                  equipes[posicao].capitao <- capitao
                   // estatisticas inicializadas
-                  eqVitorias[posicao] <- 0
-                  eqEmpates[posicao] <- 0
-                  eqDerrotas[posicao] <- 0
-                  eqPontosMarc[posicao] <- 0
-                  eqPontosSofr[posicao] <- 0
-                  eqSaldo[posicao] <- 0
-                  eqPontuacao[posicao] <- 0
-                  escreval("Equipe '", nome, "' cadastrada com sucesso!")
+                  equipes[posicao].vitorias <- 0
+                  equipes[posicao].empates <- 0
+                  equipes[posicao].derrotas <- 0
+                  equipes[posicao].pontosMarcados <- 0
+                  equipes[posicao].pontosSofridos <- 0
+                  equipes[posicao].saldo <- 0
+                  equipes[posicao].pontuacao <- 0
+                  escreval("Equipe ", nome, " cadastrada com sucesso!")
                fimse
             fimse
          fimse
@@ -245,16 +243,16 @@ fimprocedimento
 // Exibe todas as informacoes de uma equipe (idx = posicao no vetor)
 procedimento exibirEquipe(idx: inteiro)
 inicio
-   escreval("Codigo.............: ", eqCodigo[idx])
-   escreval("Equipe.............: ", eqNome[idx])
-   escreval("Capitao............: ", eqCapitao[idx])
-   escreval("Vitorias...........: ", eqVitorias[idx])
-   escreval("Empates............: ", eqEmpates[idx])
-   escreval("Derrotas...........: ", eqDerrotas[idx])
-   escreval("Pontos marcados....: ", eqPontosMarc[idx])
-   escreval("Pontos sofridos....: ", eqPontosSofr[idx])
-   escreval("Saldo de pontos....: ", eqSaldo[idx])
-   escreval("Pontuacao..........: ", eqPontuacao[idx])
+   escreval("Codigo.............: ", equipes[idx].codigo)
+   escreval("Equipe.............: ", equipes[idx].nome)
+   escreval("Capitao............: ", equipes[idx].capitao)
+   escreval("Vitorias...........: ", equipes[idx].vitorias)
+   escreval("Empates............: ", equipes[idx].empates)
+   escreval("Derrotas...........: ", equipes[idx].derrotas)
+   escreval("Pontos marcados....: ", equipes[idx].pontosMarcados)
+   escreval("Pontos sofridos....: ", equipes[idx].pontosSofridos)
+   escreval("Saldo de pontos....: ", equipes[idx].saldo)
+   escreval("Pontuacao..........: ", equipes[idx].pontuacao)
 fimprocedimento
 
 procedimento listarEquipes
@@ -267,10 +265,10 @@ inicio
       escreval("Cod  Equipe               Capitao")
       escreval("---------------------------------------------")
       para i de 1 ate qtdEquipes faca
-         escreva(eqCodigo[i]:3, "  ")
-         escreverPad(eqNome[i], 20)
+         escreva(equipes[i].codigo:3, "  ")
+         escreverPad(equipes[i].nome, 20)
          escreva(" ")
-         escreverPad(eqCapitao[i], 20)
+         escreverPad(equipes[i].capitao, 20)
          escreval("")
       fimpara
    fimse
@@ -307,12 +305,12 @@ inicio
             matPontosPro[posA,posB] <- matPontosPro[posA,posB] + pts1
             matPontosPro[posB,posA] <- matPontosPro[posB,posA] + pts2
             totalPartidas <- totalPartidas + 1
-            escreval("Partida registrada: ", eqNome[posA], " ", pts1, " x ", pts2, " ", eqNome[posB])
+            escreval("Partida registrada: ", equipes[posA].nome, " ", pts1, " x ", pts2, " ", equipes[posB].nome)
             se res1 = RES_VITORIA entao
-               escreval("Vencedor: ", eqNome[posA])
+               escreval("Vencedor: ", equipes[posA].nome)
             senao
                se res2 = RES_VITORIA entao
-                  escreval("Vencedor: ", eqNome[posB])
+                  escreval("Vencedor: ", equipes[posB].nome)
                senao
                   escreval("Resultado: EMPATE")
                fimse
@@ -343,19 +341,19 @@ var
    trocar: logico
 inicio
    trocar <- falso
-   se eqPontuacao[b] > eqPontuacao[a] entao
+   se equipes[b].pontuacao > equipes[a].pontuacao entao
       trocar <- verdadeiro
    senao
-      se eqPontuacao[b] = eqPontuacao[a] entao
-         se eqVitorias[b] > eqVitorias[a] entao
+      se equipes[b].pontuacao = equipes[a].pontuacao entao
+         se equipes[b].vitorias > equipes[a].vitorias entao
             trocar <- verdadeiro
          senao
-            se eqVitorias[b] = eqVitorias[a] entao
-               se eqSaldo[b] > eqSaldo[a] entao
+            se equipes[b].vitorias = equipes[a].vitorias entao
+               se equipes[b].saldo > equipes[a].saldo entao
                   trocar <- verdadeiro
                senao
-                  se eqSaldo[b] = eqSaldo[a] entao
-                     se eqPontosMarc[b] > eqPontosMarc[a] entao
+                  se equipes[b].saldo = equipes[a].saldo entao
+                     se equipes[b].pontosMarcados > equipes[a].pontosMarcados entao
                         trocar <- verdadeiro
                      fimse
                   fimse
@@ -367,51 +365,52 @@ inicio
    retorne trocar
 fimfuncao
 
-// Troca duas equipes de posicao: todos os campos + linhas/colunas das matrizes
+// Troca duas equipes de posicao (todos os campos do registro) e tambem as
+// linhas e colunas correspondentes das matrizes
 procedimento trocarEquipes(a: inteiro; b: inteiro)
 var
    k, auxInt: inteiro
    auxTxt: caractere
 inicio
-   auxInt <- eqCodigo[a]
-   eqCodigo[a] <- eqCodigo[b]
-   eqCodigo[b] <- auxInt
+   auxInt <- equipes[a].codigo
+   equipes[a].codigo <- equipes[b].codigo
+   equipes[b].codigo <- auxInt
 
-   auxTxt <- eqNome[a]
-   eqNome[a] <- eqNome[b]
-   eqNome[b] <- auxTxt
+   auxTxt <- equipes[a].nome
+   equipes[a].nome <- equipes[b].nome
+   equipes[b].nome <- auxTxt
 
-   auxTxt <- eqCapitao[a]
-   eqCapitao[a] <- eqCapitao[b]
-   eqCapitao[b] <- auxTxt
+   auxTxt <- equipes[a].capitao
+   equipes[a].capitao <- equipes[b].capitao
+   equipes[b].capitao <- auxTxt
 
-   auxInt <- eqVitorias[a]
-   eqVitorias[a] <- eqVitorias[b]
-   eqVitorias[b] <- auxInt
+   auxInt <- equipes[a].vitorias
+   equipes[a].vitorias <- equipes[b].vitorias
+   equipes[b].vitorias <- auxInt
 
-   auxInt <- eqEmpates[a]
-   eqEmpates[a] <- eqEmpates[b]
-   eqEmpates[b] <- auxInt
+   auxInt <- equipes[a].empates
+   equipes[a].empates <- equipes[b].empates
+   equipes[b].empates <- auxInt
 
-   auxInt <- eqDerrotas[a]
-   eqDerrotas[a] <- eqDerrotas[b]
-   eqDerrotas[b] <- auxInt
+   auxInt <- equipes[a].derrotas
+   equipes[a].derrotas <- equipes[b].derrotas
+   equipes[b].derrotas <- auxInt
 
-   auxInt <- eqPontosMarc[a]
-   eqPontosMarc[a] <- eqPontosMarc[b]
-   eqPontosMarc[b] <- auxInt
+   auxInt <- equipes[a].pontosMarcados
+   equipes[a].pontosMarcados <- equipes[b].pontosMarcados
+   equipes[b].pontosMarcados <- auxInt
 
-   auxInt <- eqPontosSofr[a]
-   eqPontosSofr[a] <- eqPontosSofr[b]
-   eqPontosSofr[b] <- auxInt
+   auxInt <- equipes[a].pontosSofridos
+   equipes[a].pontosSofridos <- equipes[b].pontosSofridos
+   equipes[b].pontosSofridos <- auxInt
 
-   auxInt <- eqSaldo[a]
-   eqSaldo[a] <- eqSaldo[b]
-   eqSaldo[b] <- auxInt
+   auxInt <- equipes[a].saldo
+   equipes[a].saldo <- equipes[b].saldo
+   equipes[b].saldo <- auxInt
 
-   auxInt <- eqPontuacao[a]
-   eqPontuacao[a] <- eqPontuacao[b]
-   eqPontuacao[b] <- auxInt
+   auxInt <- equipes[a].pontuacao
+   equipes[a].pontuacao <- equipes[b].pontuacao
+   equipes[b].pontuacao <- auxInt
 
    // troca as LINHAS a e b das matrizes
    para k de 1 ate qtdEquipes faca
@@ -460,9 +459,9 @@ inicio
       escreval("-----------------------------------------------------------")
       para i de 1 ate qtdEquipes faca
          escreva(i:3, " ")
-         escreverPad(eqNome[i], 20)
-         escreva(eqPontuacao[i]:5, eqVitorias[i]:5, eqEmpates[i]:5, eqDerrotas[i]:5)
-         escreva(eqPontosMarc[i]:5, eqPontosSofr[i]:5, eqSaldo[i]:5)
+         escreverPad(equipes[i].nome, 20)
+         escreva(equipes[i].pontuacao:5, equipes[i].vitorias:5, equipes[i].empates:5, equipes[i].derrotas:5)
+         escreva(equipes[i].pontosMarcados:5, equipes[i].pontosSofridos:5, equipes[i].saldo:5)
          escreval("")
       fimpara
       escreval("P=Pontos V=Vitorias E=Empates D=Derrotas PM=Pontos Marcados PS=Pontos Sofridos SG=Saldo")
@@ -488,19 +487,19 @@ inicio
       idxMaxSaldo <- 1
       idxMaxMarc <- 1
       para i de 1 ate qtdEquipes faca
-         somaVitorias <- somaVitorias + eqVitorias[i]
-         somaEmpates <- somaEmpates + eqEmpates[i]
-         somaMarcados <- somaMarcados + eqPontosMarc[i]
-         se eqVitorias[i] > eqVitorias[idxMaxVit] entao
+         somaVitorias <- somaVitorias + equipes[i].vitorias
+         somaEmpates <- somaEmpates + equipes[i].empates
+         somaMarcados <- somaMarcados + equipes[i].pontosMarcados
+         se equipes[i].vitorias > equipes[idxMaxVit].vitorias entao
             idxMaxVit <- i
          fimse
-         se eqPontuacao[i] > eqPontuacao[idxMaxPts] entao
+         se equipes[i].pontuacao > equipes[idxMaxPts].pontuacao entao
             idxMaxPts <- i
          fimse
-         se eqSaldo[i] > eqSaldo[idxMaxSaldo] entao
+         se equipes[i].saldo > equipes[idxMaxSaldo].saldo entao
             idxMaxSaldo <- i
          fimse
-         se eqPontosMarc[i] > eqPontosMarc[idxMaxMarc] entao
+         se equipes[i].pontosMarcados > equipes[idxMaxMarc].pontosMarcados entao
             idxMaxMarc <- i
          fimse
       fimpara
@@ -516,10 +515,10 @@ inicio
       senao
          escreval("Media de pontos por partida: sem partidas realizadas.")
       fimse
-      escreval("Mais vitorias.............: ", eqNome[idxMaxVit], " (", eqVitorias[idxMaxVit], ")")
-      escreval("Maior pontuacao...........: ", eqNome[idxMaxPts], " (", eqPontuacao[idxMaxPts], ")")
-      escreval("Maior saldo...............: ", eqNome[idxMaxSaldo], " (", eqSaldo[idxMaxSaldo], ")")
-      escreval("Mais pontos marcados......: ", eqNome[idxMaxMarc], " (", eqPontosMarc[idxMaxMarc], ")")
+      escreval("Mais vitorias.............: ", equipes[idxMaxVit].nome, " (", equipes[idxMaxVit].vitorias, ")")
+      escreval("Maior pontuacao...........: ", equipes[idxMaxPts].nome, " (", equipes[idxMaxPts].pontuacao, ")")
+      escreval("Maior saldo...............: ", equipes[idxMaxSaldo].nome, " (", equipes[idxMaxSaldo].saldo, ")")
+      escreval("Mais pontos marcados......: ", equipes[idxMaxMarc].nome, " (", equipes[idxMaxMarc].pontosMarcados, ")")
    fimse
 fimprocedimento
 
@@ -534,11 +533,11 @@ inicio
       escreval("MATRIZ DE CONFRONTOS (numero de partidas entre as equipes)")
       escreva("Cod  ")
       para j de 1 ate qtdEquipes faca
-         escreva(eqCodigo[j]:5)
+         escreva(equipes[j].codigo:5)
       fimpara
       escreval("")
       para i de 1 ate qtdEquipes faca
-         escreva(eqCodigo[i]:3, "  ")
+         escreva(equipes[i].codigo:3, "  ")
          para j de 1 ate qtdEquipes faca
             se i = j entao
                escreva("    -")
@@ -556,13 +555,13 @@ inicio
          se posicao = 0 entao
             escreval("Equipe nao localizada.")
          senao
-            escreval("Confrontos de ", eqNome[posicao], ":")
+            escreval("Confrontos de ", equipes[posicao].nome, ":")
             para j de 1 ate qtdEquipes faca
                se j <> posicao entao
                   se matJogos[posicao,j] > 0 entao
-                     escreval("  vs ", eqNome[j], ": ", matJogos[posicao,j], " jogo(s) | marcou ", matPontosPro[posicao,j], " | sofreu ", matPontosPro[j,posicao])
+                     escreval("  vs ", equipes[j].nome, ": ", matJogos[posicao,j], " jogo(s) | marcou ", matPontosPro[posicao,j], " | sofreu ", matPontosPro[j,posicao])
                   senao
-                     escreval("  vs ", eqNome[j], ": ainda nao se enfrentaram")
+                     escreval("  vs ", equipes[j].nome, ": ainda nao se enfrentaram")
                   fimse
                fimse
             fimpara
@@ -622,4 +621,3 @@ inicio
       fimescolha
    ate opcao = 9
 fimalgoritmo
-
