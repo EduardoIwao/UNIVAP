@@ -12,12 +12,11 @@ const
    PONTOS_EMPATE = 1
    PONTOS_DERROTA = 0
    MAX_EQUIPES = 10
-   RES_VITORIA = 1     // codigos internos do resultado de uma partida
+   RES_VITORIA = 1
    RES_EMPATE = 2
    RES_DERROTA = 3
 
 tipo
-   // Registro que representa logicamente uma equipe
    tEquipe = registro
       codigo: inteiro
       nome: caractere
@@ -32,23 +31,13 @@ tipo
    fimregistro
 
 var
-   // vetor de registros (tamanho = MAX_EQUIPES)
-   equipes: vetor[1..10] de tEquipe
-
-   // matrizes de confrontos
-   matJogos: vetor[1..10,1..10] de inteiro
-   matPontosPro: vetor[1..10,1..10] de inteiro
-
-   // estado geral do campeonato
+   equipes: vetor[1..MAX_EQUIPES] de tEquipe
+   matJogos: vetor[1..MAX_EQUIPES,1..MAX_EQUIPES] de inteiro
+   matPontosPro: vetor[1..MAX_EQUIPES,1..MAX_EQUIPES] de inteiro
    qtdEquipes: inteiro
    totalPartidas: inteiro
    opcao: inteiro
 
-// ============================================================================
-// SUB-ROTINAS
-// ============================================================================
-
-// Zera os contadores e as matrizes (chamado uma vez no inicio)
 procedimento inicializarSistema
 var
    i, j: inteiro
@@ -66,7 +55,6 @@ inicio
       equipes[i].pontosSofridos <- 0
       equipes[i].saldo <- 0
       equipes[i].pontuacao <- 0
-      // repeticao aninhada: zera a linha i das matrizes
       para j de 1 ate MAX_EQUIPES faca
          matJogos[i,j] <- 0
          matPontosPro[i,j] <- 0
@@ -74,8 +62,6 @@ inicio
    fimpara
 fimprocedimento
 
-// RECURSIVIDADE: contagem regressiva para o inicio do campeonato.
-// Caso-base: n <= 0. Chamada recursiva: contagemRegressiva(n - 1).
 procedimento contagemRegressiva(n: inteiro)
 inicio
    se n <= 0 entao
@@ -87,7 +73,6 @@ inicio
    fimse
 fimprocedimento
 
-// Escreve um texto e completa com espacos ate a largura informada
 procedimento escreverPad(texto: caractere; largura: inteiro)
 var
    i: inteiro
@@ -98,7 +83,6 @@ inicio
    fimpara
 fimprocedimento
 
-// Um texto e valido se tiver ao menos um caractere diferente de espaco
 funcao nomeValido(texto: caractere): logico
 var
    i: inteiro
@@ -113,7 +97,6 @@ inicio
    retorne achouLetra
 fimfuncao
 
-// Le um inteiro >= 0, repetindo ate o usuario digitar um valor valido
 funcao lerNaoNegativo(mensagem: caractere): inteiro
 var
    valor: inteiro
@@ -128,7 +111,6 @@ inicio
    retorne valor
 fimfuncao
 
-// Funcao de busca: devolve o indice da equipe no vetor (0 se nao encontrada)
 funcao localizarEquipe(codigo: inteiro): inteiro
 var
    i, posicao: inteiro
@@ -144,20 +126,16 @@ inicio
    retorne posicao
 fimfuncao
 
-// Funcao: saldo de pontos = marcados - sofridos
 funcao calcularSaldo(marcados: inteiro; sofridos: inteiro): inteiro
 inicio
    retorne marcados - sofridos
 fimfuncao
 
-// Funcao: pontuacao no campeonato a partir de vitorias, empates e derrotas
 funcao calcularPontuacao(vitorias: inteiro; empates: inteiro; derrotas: inteiro): inteiro
 inicio
    retorne vitorias * PONTOS_VITORIA + empates * PONTOS_EMPATE + derrotas * PONTOS_DERROTA
 fimfuncao
 
-// PASSAGEM POR REFERENCIA (var): res1 e res2 sao alterados aqui e o novo valor
-// precisa voltar para quem chamou.
 procedimento determinarResultado(pontos1: inteiro; pontos2: inteiro; var res1: inteiro; var res2: inteiro)
 inicio
    se pontos1 > pontos2 entao
@@ -174,7 +152,6 @@ inicio
    fimse
 fimprocedimento
 
-// Atualiza as estatisticas de UMA equipe (idx) apos uma partida
 procedimento atualizarEquipe(idx: inteiro; marcados: inteiro; sofridos: inteiro; resultado: inteiro)
 inicio
    equipes[idx].pontosMarcados <- equipes[idx].pontosMarcados + marcados
@@ -192,7 +169,6 @@ inicio
    equipes[idx].pontuacao <- calcularPontuacao(equipes[idx].vitorias, equipes[idx].empates, equipes[idx].derrotas)
 fimprocedimento
 
-// Cadastro de equipe com todas as validacoes exigidas
 procedimento cadastrarEquipe
 var
    codigo, posicao: inteiro
@@ -224,7 +200,6 @@ inicio
                   equipes[posicao].codigo <- codigo
                   equipes[posicao].nome <- nome
                   equipes[posicao].capitao <- capitao
-                  // estatisticas inicializadas
                   equipes[posicao].vitorias <- 0
                   equipes[posicao].empates <- 0
                   equipes[posicao].derrotas <- 0
@@ -240,7 +215,6 @@ inicio
    fimse
 fimprocedimento
 
-// Exibe todas as informacoes de uma equipe (idx = posicao no vetor)
 procedimento exibirEquipe(idx: inteiro)
 inicio
    escreval("Codigo.............: ", equipes[idx].codigo)
@@ -274,7 +248,6 @@ inicio
    fimse
 fimprocedimento
 
-// Registro de partida: valida, define o resultado, atualiza equipes e matrizes
 procedimento registrarPartida
 var
    cod1, cod2, posA, posB, pts1, pts2, res1, res2: inteiro
@@ -299,7 +272,6 @@ inicio
             determinarResultado(pts1, pts2, res1, res2)
             atualizarEquipe(posA, pts1, pts2, res1)
             atualizarEquipe(posB, pts2, pts1, res2)
-            // matrizes de confrontos
             matJogos[posA,posB] <- matJogos[posA,posB] + 1
             matJogos[posB,posA] <- matJogos[posB,posA] + 1
             matPontosPro[posA,posB] <- matPontosPro[posA,posB] + pts1
@@ -334,8 +306,6 @@ inicio
    fimse
 fimprocedimento
 
-// Funcao: decide se a equipe 'b' (logo abaixo) deve subir acima da equipe 'a'.
-// Criterios: 1) pontuacao 2) vitorias 3) saldo 4) pontos marcados
 funcao deveTrocar(a: inteiro; b: inteiro): logico
 var
    trocar: logico
@@ -365,8 +335,6 @@ inicio
    retorne trocar
 fimfuncao
 
-// Troca duas equipes de posicao (todos os campos do registro) e tambem as
-// linhas e colunas correspondentes das matrizes
 procedimento trocarEquipes(a: inteiro; b: inteiro)
 var
    k, auxInt: inteiro
@@ -412,7 +380,6 @@ inicio
    equipes[a].pontuacao <- equipes[b].pontuacao
    equipes[b].pontuacao <- auxInt
 
-   // troca as LINHAS a e b das matrizes
    para k de 1 ate qtdEquipes faca
       auxInt <- matJogos[a,k]
       matJogos[a,k] <- matJogos[b,k]
@@ -421,7 +388,6 @@ inicio
       matPontosPro[a,k] <- matPontosPro[b,k]
       matPontosPro[b,k] <- auxInt
    fimpara
-   // troca as COLUNAS a e b das matrizes
    para k de 1 ate qtdEquipes faca
       auxInt <- matJogos[k,a]
       matJogos[k,a] <- matJogos[k,b]
@@ -432,7 +398,6 @@ inicio
    fimpara
 fimprocedimento
 
-// ORDENACAO: Bubble Sort (a cada passada o pior colocado "afunda" para o fim)
 procedimento ordenarClassificacao
 var
    i, j: inteiro
@@ -504,11 +469,9 @@ inicio
          fimse
       fimpara
       escreval("Partidas realizadas.......: ", totalPartidas)
-      // cada partida decidida gera 1 vitoria; cada empate e contado nas 2 equipes
       escreval("Partidas com vitoria......: ", somaVitorias)
       escreval("Partidas empatadas........: ", somaEmpates div 2)
       se totalPartidas > 0 entao
-         // soma dos pontos das duas equipes dividida pelo numero de partidas
          mediaPartida <- somaMarcados / totalPartidas
          escreval("Media de pontos marcados por partida (soma das duas equipes): ", mediaPartida:6:2)
          escreval("Media de pontos marcados por equipe por partida: ", mediaPartida / 2:6:2)
@@ -522,7 +485,6 @@ inicio
    fimse
 fimprocedimento
 
-// Mostra a matriz de confrontos (numero de partidas) e detalha uma equipe
 procedimento consultarConfrontos
 var
    i, j, codigo, posicao: inteiro
@@ -586,9 +548,6 @@ inicio
    escreval("============================================")
 fimprocedimento
 
-// ============================================================================
-// ALGORITMO PRINCIPAL: apenas inicializa e controla o menu
-// ============================================================================
 inicio
    inicializarSistema
    repita
